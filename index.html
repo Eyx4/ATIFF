@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Convert Image to .atiff</title>
+</head>
+<body>
+    <input type="file" id="fileInput" accept="image/*">
+    <button onclick="convertImageToAtiff()">Convert to .atiff</button>
+    <br>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <a id="downloadLink" style="display:none;">Download .atiff</a>
+
+    <script>
+        // Function to convert image to .atiff format (simplified)
+        function convertImageToAtiff() {
+            const fileInput = document.getElementById('fileInput');
+            const canvas = document.getElementById('canvas');
+            const downloadLink = document.getElementById('downloadLink');
+
+            if (fileInput.files.length === 0) {
+                alert('Please select an image file.');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const pixelData = imageData.data;
+
+                    let atiffHexData = '';
+
+                    // Convert pixel data to hex and append to atiffHexData
+                    for (let i = 0; i < pixelData.length; i += 4) {
+                        const hexValue = ('000000' + rgbToHex(pixelData[i], pixelData[i + 1], pixelData[i + 2])).slice(-6);
+                        atiffHexData += hexValue;
+                    }
+
+                    // For demonstration, simulate a download link for the .atiff file
+                    const blob = new Blob([atiffHexData], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    downloadLink.href = url;
+                    downloadLink.download = 'image.atiff';
+                    downloadLink.style.display = 'block';
+                };
+
+                img.src = event.target.result;
+            };
+
+            reader.readAsDataURL(file);
+        }
+
+        // Function to convert RGB to hex color
+        function rgbToHex(r, g, b) {
+            return ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+        }
+    </script>
+</body>
+</html>
