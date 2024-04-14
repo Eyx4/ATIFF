@@ -1,64 +1,45 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Convert Image to .atiff</title>
+    <title>Create .atiff File</title>
 </head>
 <body>
-    <input type="file" id="fileInput" accept="image/*">
-    <button onclick="convertImageToAtiff()">Convert to .atiff</button>
+    <button onclick="createAtiffFile()">Create .atiff File</button>
 
     <script>
-        // Function to convert image to .atiff format (simplified)
-        function convertImageToAtiff() {
-            const fileInput = document.getElementById('fileInput');
+        function createAtiffFile() {
+            const pixelData = [
+                0xFF0000, // Red pixel
+                0x00FF00, // Green pixel
+                0x0000FF  // Blue pixel
+            ];
 
-            if (fileInput.files.length === 0) {
-                alert('Please select an image file.');
-                return;
+            const header = new Uint8Array([
+                0x41, 0x54, 0x49, 0x46, 0x46, // "ATIFF" magic number
+                0x00, 0x00, 0x00, 0x0C,       // File size (excluding header) = 12 bytes
+                0x00, 0x00, 0x00, 0x03        // Number of pixels = 3
+            ]);
+
+            const pixelBytes = new Uint8Array(pixelData.length * 3); // Each pixel is 3 bytes (RGB)
+            for (let i = 0; i < pixelData.length; i++) {
+                const red = (pixelData[i] >> 16) & 0xFF;
+                const green = (pixelData[i] >> 8) & 0xFF;
+                const blue = pixelData[i] & 0xFF;
+                const offset = i * 3;
+                pixelBytes[offset] = red;
+                pixelBytes[offset + 1] = green;
+                pixelBytes[offset + 2] = blue;
             }
 
-            const file = fileInput.files[0];
-            const reader = new FileReader();
+            const blob = new Blob([header, pixelBytes], { type: 'application/octet-stream' });
 
-            reader.onload = function(event) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
-
-                    // Simulate conversion to .atiff data (in this case, a base64 representation)
-                    const atiffData = canvas.toDataURL('image/tiff'); // Use 'image/tiff' for demonstration
-
-                    // Create a Blob from the data URL (remove the MIME type prefix)
-                    const blobData = atob(atiffData.split(',')[1]); // Decode base64 data
-                    const arrayBuffer = new ArrayBuffer(blobData.length);
-                    const uint8Array = new Uint8Array(arrayBuffer);
-
-                    // Convert binary string to Uint8Array
-                    for (let i = 0; i < blobData.length; i++) {
-                        uint8Array[i] = blobData.charCodeAt(i);
-                    }
-
-                    // Create Blob from Uint8Array and specify the MIME type
-                    const blob = new Blob([uint8Array], { type: 'image/tiff' });
-
-                    // Create a download link and trigger the download
-                    const downloadLink = document.createElement('a');
-                    downloadLink.href = URL.createObjectURL(blob);
-                    downloadLink.download = 'image.atiff';
-                    downloadLink.style.display = 'none';
-                    document.body.appendChild(downloadLink);
-                    downloadLink.click();
-                    document.body.removeChild(downloadLink);
-                };
-
-                img.src = event.target.result;
-            };
-
-            reader.readAsDataURL(file);
+            const downloadLink = document.createElement('a');
+            downloadLink.href = URL.createObjectURL(blob);
+            downloadLink.download = 'image.atiff';
+            downloadLink.style.display = 'none';
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
         }
     </script>
 </body>
