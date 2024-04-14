@@ -1,22 +1,26 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Image to Custom Binary File</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image to ATIFF</title>
 </head>
 <body>
-    <input type="file" id="fileInput" accept="image/*">
-    <button onclick="convertImageToAtiff()">Convert to .atiff</button>
-    <br>
-    <input type="file" id="binaryFileInput" accept=".bin">
-    <button onclick="loadAndDisplayFile()">Load and Display .atiff</button>
+    <h1>Custom Binary File Viewer</h1>
+
+    <!-- File input for selecting binary files -->
+    <input type="file" id="binaryFileInput" accept=".bin, .atiff">
+    <button onclick="loadAndDisplayFile()">Load and Display</button>
+
+    <!-- Container to display file content -->
     <div id="fileContent" style="white-space: pre-wrap;"></div>
 
     <script>
-        function convertImageToAtiff() {
-            const fileInput = document.getElementById('fileInput');
+        function loadAndDisplayFile() {
+            const fileInput = document.getElementById('binaryFileInput');
 
-            if (fileInput.files.length === 0) {
-                alert('Please select an image file.');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('Please select a binary file.');
                 return;
             }
 
@@ -24,62 +28,10 @@
             const reader = new FileReader();
 
             reader.onload = function(event) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
-
-                    // Simulate conversion to .atiff data (in this case, a base64 representation)
-                    const atiffData = canvas.toDataURL('image/tiff'); // Use 'image/tiff' for demonstration
-
-                    // Create a Blob from the data URL (remove the MIME type prefix)
-                    const blobData = atob(atiffData.split(',')[1]); // Decode base64 data
-                    const arrayBuffer = new ArrayBuffer(blobData.length);
-                    const uint8Array = new Uint8Array(arrayBuffer);
-
-                    // Convert binary string to Uint8Array
-                    for (let i = 0; i < blobData.length; i++) {
-                        uint8Array[i] = blobData.charCodeAt(i);
-                    }
-
-                    // Create Blob from Uint8Array and specify the MIME type
-                    const blob = new Blob([uint8Array], { type: 'application/octet-stream' });
-
-                    // Automatically download the converted file
-                    const downloadLink = document.createElement('a');
-                    downloadLink.href = URL.createObjectURL(blob);
-                    downloadLink.download = 'image.atiff';
-                    downloadLink.style.display = 'none';
-                    document.body.appendChild(downloadLink);
-                    downloadLink.click();
-                    document.body.removeChild(downloadLink);
-                };
-
-                img.src = event.target.result;
-            };
-
-            reader.readAsDataURL(file);
-        }
-
-        function loadAndDisplayFile() {
-            const binaryFileInput = document.getElementById('binaryFileInput');
-
-            if (binaryFileInput.files.length === 0) {
-                alert('Please select a binary file.');
-                return;
-            }
-
-            const file = binaryFileInput.files[0];
-            const reader = new FileReader();
-
-            reader.onload = function(event) {
                 const arrayBuffer = event.target.result;
                 const dataView = new DataView(arrayBuffer);
 
-                // Read and display file header (assuming it's structured as in the conversion example)
+                // Read file header (assuming it's structured)
                 const magicNumber = String.fromCharCode(
                     dataView.getUint8(0),
                     dataView.getUint8(1),
@@ -91,11 +43,12 @@
                 const fileSize = dataView.getUint32(5, true);
                 const numPixels = dataView.getUint32(9, true);
 
+                // Display file information
                 let fileContent = `Magic Number: ${magicNumber}\n`;
                 fileContent += `File Size (excluding header): ${fileSize} bytes\n`;
                 fileContent += `Number of Pixels: ${numPixels}\n\n`;
 
-                // Read and display some pixel data (assuming each pixel is represented by 3 bytes)
+                // Display pixel data (assuming each pixel is represented by 3 bytes)
                 const pixelDataStartIndex = 13;
                 for (let i = 0; i < Math.min(numPixels, 3); i++) {
                     const offset = pixelDataStartIndex + (i * 3);
@@ -105,7 +58,7 @@
                     fileContent += `Pixel ${i + 1}: RGB(${red}, ${green}, ${blue})\n`;
                 }
 
-                // Display the file content on the webpage
+                // Display the file content in the webpage
                 const fileContentElement = document.getElementById('fileContent');
                 fileContentElement.textContent = fileContent;
             };
